@@ -1,5 +1,5 @@
 {
-  "name": "crm-sharp-version",
+  "name": "crm-live-integrations",
   "private": true,
   "scripts": {
     "build": "next build",

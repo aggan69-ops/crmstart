@@ -1,21 +1,15 @@
-Södertörns Team CRM - skarp version
+Södertörns Team CRM - live integrations version
 
-Innehåll:
-- dashboard med widgets
-- admin/login + behörigheter
-- leads, kunder, order, aktiviteter
-- leverantörsdropdown i order
-- uppdateringskö för kunddata till Fortnox
-- förberedda API-routes för Fortnox, Office 365, Teams, ABR
-- AI-assistent
-- företagslookup med segmentering
-- lokal lagring i browsern
+Nytt i denna version:
+- live-redo miljövariabler för Fortnox, Office 365, Teams, Telavox, katalog-API och Brent-widget
+- smarta widgets på dashboard
+- inkommande samtal med autosave
+- order med leverantörsrullista
+- fakturera från order
+- synk-kö för kundändringar innan Fortnox
+- AI-panel
+- admin + anställda + widgetbehörigheter
 
 Demo-inloggning:
 Admin: admin@sodertornsteam.se / admin123
-Sälj: salj@sodertornsteam.se / 1234
-
-Viktigt:
-- Detta är en live-redo struktur men utan riktiga tokens.
-- Fortnox / Office 365 / Teams / ABR är förberedda med test- och statusrutter.
-- Nästa steg är att lägga riktiga hemligheter i server-side miljövariabler.
+Anställd: salj@sodertornsteam.se / 1234
