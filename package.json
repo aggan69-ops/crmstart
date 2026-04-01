@@ -1,12 +1,12 @@
 {
-  "name": "crm-basic-complete",
+  "name": "crm",
   "private": true,
   "scripts": {
     "build": "next build",
     "start": "next start"
   },
   "dependencies": {
-    "next": "15.3.3",
+    "next": "15.3.6",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
