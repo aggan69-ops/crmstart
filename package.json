@@ -1,5 +1,5 @@
 {
-  "name": "crm-next-version",
+  "name": "crm-fixed-ui",
   "private": true,
   "scripts": {
     "build": "next build",
