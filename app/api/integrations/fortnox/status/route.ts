@@ -1,1 +1,9 @@
-import { NextResponse } from "next/server"; export async function GET(){ return NextResponse.json({ provider:"fortnox", ready:true, message:"Fortnox är förberett för kunder, order och fakturor." }); }
+import { NextResponse } from "next/server";
+
+export async function GET() {
+  return NextResponse.json({
+    provider: "fortnox",
+    ready: true,
+    message: "Fortnox är förberett för kunder, order och fakturor."
+  });
+}

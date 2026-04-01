@@ -22,8 +22,6 @@ export async function POST(req: NextRequest) {
       city: "Stockholm",
       segment: segmentFromQuery(query),
       email: "info@lookupforetag.se",
-      paymentTerms: "30 dagar",
-      source: "Lookup",
       hot: false
     }
   });

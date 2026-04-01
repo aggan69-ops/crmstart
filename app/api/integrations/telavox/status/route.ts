@@ -1,1 +1,9 @@
-import { NextResponse } from "next/server"; export async function GET(){ return NextResponse.json({ provider:"telavox", ready:true, message:"Telavox är förberett för samtals-popup, autosave och klick-för-att-ringa." }); }
+import { NextResponse } from "next/server";
+
+export async function GET() {
+  return NextResponse.json({
+    provider: "telavox",
+    ready: true,
+    message: "Telavox är förberett för samtals-popup, autosave och klick-för-att-ringa."
+  });
+}

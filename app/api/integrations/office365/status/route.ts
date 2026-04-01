@@ -1,1 +1,9 @@
-import { NextResponse } from "next/server"; export async function GET(){ return NextResponse.json({ provider:"office365", ready:true, message:"Office 365 är förberett för mail, kalender och kontakter." }); }
+import { NextResponse } from "next/server";
+
+export async function GET() {
+  return NextResponse.json({
+    provider: "office365",
+    ready: true,
+    message: "Office 365 är förberett för mail, kalender och kontakter."
+  });
+}
