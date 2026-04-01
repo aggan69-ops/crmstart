@@ -23,7 +23,8 @@ export async function POST(req: NextRequest) {
       segment: segmentFromQuery(query),
       email: "info@lookupforetag.se",
       paymentTerms: "30 dagar",
-      source: "Lookup"
+      source: "Lookup",
+      hot: false
     }
   });
 }

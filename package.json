@@ -1,5 +1,5 @@
 {
-  "name": "crm-telavox-style",
+  "name": "crm-branch-plus",
   "private": true,
   "scripts": {
     "build": "next build",

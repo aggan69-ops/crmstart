@@ -3,38 +3,26 @@
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 
-type SectionKey = "dashboard" | "leads" | "customers" | "orders" | "calls" | "sync" | "integrations" | "admin";
-type WidgetKey = "stats" | "quickActions" | "recentLeads" | "syncQueue" | "incomingCall" | "brent" | "catalog" | "ai" | "today";
+type SectionKey = "dashboard" | "pipeline" | "leads" | "customers" | "orders" | "quotes" | "tasks" | "calls" | "sync" | "integrations" | "admin";
+type WidgetKey = "stats" | "quickActions" | "recentLeads" | "syncQueue" | "incomingCall" | "brent" | "catalog" | "ai" | "today" | "hotlist" | "quotes";
 
-type Lead = { company: string; contact: string; segment: string; status: "Ny" | "Kontaktad" | "Offert" | "Affär" | "Förlorad" };
-type Customer = { id: string; name: string; orgNumber: string; city: string; segment: string; email?: string; paymentTerms?: string; source?: string };
+type Lead = { id: string; company: string; contact: string; segment: string; status: "Ny" | "Kontaktad" | "Offert" | "Affär" | "Förlorad" };
+type Customer = { id: string; name: string; orgNumber: string; city: string; segment: string; email?: string; paymentTerms?: string; source?: string; hot?: boolean };
 type Supplier = { id: string; name: string; category: string; fortnoxSupplierNo: string };
 type Order = { id: string; customer: string; supplier: string; text: string; status: "Utkast" | "Skickad" | "Fakturerad" };
+type QuoteDraft = { id: string; customer: string; title: string; text: string; status: "Utkast" | "Skickad" };
+type Task = { id: string; title: string; due: string; owner: string; status: "Öppen" | "Klar" };
 type SyncItem = { id: string; customerName: string; field: string; oldValue: string; newValue: string; status: "Pending" | "Approved" | "Rejected" };
 type CallNote = { id: string; phone: string; customerName: string; note: string; savedAt: string; source: "Telavox" | "Teams Calling" | "Manual" };
+type Audit = { id: string; text: string; at: string };
 type User = { id: string; name: string; email: string; password: string; role: "admin" | "employee"; permissions: Record<SectionKey, boolean>; widgets: Record<WidgetKey, boolean> };
 
 const sectionLabels: Record<SectionKey, string> = {
-  dashboard: "Dashboard",
-  leads: "Leads",
-  customers: "Kunder",
-  orders: "Order",
-  calls: "Samtal",
-  sync: "Synk-kö",
-  integrations: "Integrationer",
-  admin: "Admin"
+  dashboard: "Dashboard", pipeline: "Pipeline", leads: "Leads", customers: "Kunder", orders: "Order", quotes: "Offerter", tasks: "Tasks", calls: "Samtal", sync: "Synk-kö", integrations: "Integrationer", admin: "Admin"
 };
 
 const widgetLabels: Record<WidgetKey, string> = {
-  stats: "Statistik",
-  quickActions: "Snabbknappar",
-  recentLeads: "Senaste leads",
-  syncQueue: "Synk-kö",
-  incomingCall: "Pågående samtal",
-  brent: "Brent-widget",
-  catalog: "Katalog-widget",
-  ai: "AI-panel",
-  today: "Idag-widget"
+  stats: "Statistik", quickActions: "Snabbknappar", recentLeads: "Senaste leads", syncQueue: "Synk-kö", incomingCall: "Pågående samtal", brent: "Brent-widget", catalog: "Katalog-widget", ai: "AI-panel", today: "Idag-widget", hotlist: "Hotlist", quotes: "Offerter-widget"
 };
 
 const defaultSuppliers: Supplier[] = [
@@ -44,18 +32,28 @@ const defaultSuppliers: Supplier[] = [
 ];
 
 const defaultLeads: Lead[] = [
-  { company: "Nordtrafik Service AB", contact: "Anders Holm", segment: "Transport", status: "Ny" },
-  { company: "Stålverk Mekaniska", contact: "Maria Eng", segment: "Verkstad", status: "Kontaktad" }
+  { id: "lead-1", company: "Nordtrafik Service AB", contact: "Anders Holm", segment: "Transport", status: "Ny" },
+  { id: "lead-2", company: "Stålverk Mekaniska", contact: "Maria Eng", segment: "Verkstad", status: "Kontaktad" },
+  { id: "lead-3", company: "Maskin Drift AB", contact: "Peter Nor", segment: "Industri", status: "Offert" }
 ];
 
 const defaultCustomers: Customer[] = [
-  { id: "cust-1", name: "Mälarfrakt AB", orgNumber: "556123-1111", city: "Västerås", segment: "Transport", email: "info@malarfrakt.se", paymentTerms: "30 dagar", source: "Lookup" },
-  { id: "cust-2", name: "Söder Verkstad", orgNumber: "556123-2222", city: "Nykvarn", segment: "Verkstad", email: "order@soderverkstad.se", paymentTerms: "20 dagar", source: "Manual" }
+  { id: "cust-1", name: "Mälarfrakt AB", orgNumber: "556123-1111", city: "Västerås", segment: "Transport", email: "info@malarfrakt.se", paymentTerms: "30 dagar", source: "Lookup", hot: true },
+  { id: "cust-2", name: "Söder Verkstad", orgNumber: "556123-2222", city: "Nykvarn", segment: "Verkstad", email: "order@soderverkstad.se", paymentTerms: "20 dagar", source: "Manual", hot: false }
 ];
 
 const defaultOrders: Order[] = [
   { id: "ord-1", customer: "Mälarfrakt AB", supplier: "LubriTech Nordic", text: "Motorolja 5W30 20L", status: "Utkast" },
   { id: "ord-2", customer: "Söder Verkstad", supplier: "SKF Distributionspartner", text: "Kullager 6205", status: "Skickad" }
+];
+
+const defaultQuotes: QuoteDraft[] = [
+  { id: "quote-1", customer: "Mälarfrakt AB", title: "Olja + filter april", text: "Prisförslag på 5W30 och filterpaket.", status: "Utkast" }
+];
+
+const defaultTasks: Task[] = [
+  { id: "task-1", title: "Följ upp Mälarfrakt", due: "2026-04-03", owner: "Säljare", status: "Öppen" },
+  { id: "task-2", title: "Skicka offert Söder Verkstad", due: "2026-04-02", owner: "Admin", status: "Öppen" }
 ];
 
 const defaultSyncQueue: SyncItem[] = [
@@ -67,24 +65,20 @@ const defaultCallNotes: CallNote[] = [
   { id: "call-1", phone: "0701234567", customerName: "Mälarfrakt AB", note: "Ville ha pris på 5W30 och filter", savedAt: "2026-04-01 09:12", source: "Telavox" }
 ];
 
+const defaultAudit: Audit[] = [
+  { id: "audit-1", text: "Admin loggade in", at: "2026-04-01 08:00" }
+];
+
 const defaultAdmin: User = {
-  id: "u-admin",
-  name: "Admin",
-  email: "admin@sodertornsteam.se",
-  password: "admin123",
-  role: "admin",
-  permissions: { dashboard: true, leads: true, customers: true, orders: true, calls: true, sync: true, integrations: true, admin: true },
-  widgets: { stats: true, quickActions: true, recentLeads: true, syncQueue: true, incomingCall: true, brent: true, catalog: true, ai: true, today: true }
+  id: "u-admin", name: "Admin", email: "admin@sodertornsteam.se", password: "admin123", role: "admin",
+  permissions: { dashboard: true, pipeline: true, leads: true, customers: true, orders: true, quotes: true, tasks: true, calls: true, sync: true, integrations: true, admin: true },
+  widgets: { stats: true, quickActions: true, recentLeads: true, syncQueue: true, incomingCall: true, brent: true, catalog: true, ai: true, today: true, hotlist: true, quotes: true }
 };
 
 const defaultEmployee: User = {
-  id: "u-employee",
-  name: "Säljare",
-  email: "salj@sodertornsteam.se",
-  password: "1234",
-  role: "employee",
-  permissions: { dashboard: true, leads: true, customers: true, orders: true, calls: true, sync: false, integrations: false, admin: false },
-  widgets: { stats: true, quickActions: true, recentLeads: true, syncQueue: false, incomingCall: true, brent: true, catalog: true, ai: true, today: true }
+  id: "u-employee", name: "Säljare", email: "salj@sodertornsteam.se", password: "1234", role: "employee",
+  permissions: { dashboard: true, pipeline: true, leads: true, customers: true, orders: true, quotes: true, tasks: true, calls: true, sync: false, integrations: false, admin: false },
+  widgets: { stats: true, quickActions: true, recentLeads: true, syncQueue: false, incomingCall: true, brent: true, catalog: true, ai: true, today: true, hotlist: true, quotes: true }
 };
 
 export default function Page() {
@@ -95,9 +89,12 @@ export default function Page() {
   const [leads, setLeads] = useState<Lead[]>(defaultLeads);
   const [customers, setCustomers] = useState<Customer[]>(defaultCustomers);
   const [orders, setOrders] = useState<Order[]>(defaultOrders);
+  const [quotes, setQuotes] = useState<QuoteDraft[]>(defaultQuotes);
+  const [tasks, setTasks] = useState<Task[]>(defaultTasks);
   const [suppliers] = useState<Supplier[]>(defaultSuppliers);
   const [syncQueue, setSyncQueue] = useState<SyncItem[]>(defaultSyncQueue);
   const [callNotes, setCallNotes] = useState<CallNote[]>(defaultCallNotes);
+  const [audit, setAudit] = useState<Audit[]>(defaultAudit);
 
   const [email, setEmail] = useState("admin@sodertornsteam.se");
   const [password, setPassword] = useState("admin123");
@@ -115,6 +112,13 @@ export default function Page() {
   const [orderMessage, setOrderMessage] = useState("");
   const [invoiceMessage, setInvoiceMessage] = useState("");
   const [fortnoxMessage, setFortnoxMessage] = useState("");
+
+  const [newQuoteCustomer, setNewQuoteCustomer] = useState(defaultCustomers[0]?.name || "");
+  const [newQuoteTitle, setNewQuoteTitle] = useState("");
+  const [newQuoteText, setNewQuoteText] = useState("");
+
+  const [newTaskTitle, setNewTaskTitle] = useState("");
+  const [newTaskDue, setNewTaskDue] = useState("2026-04-03");
 
   const [callPhone, setCallPhone] = useState("0701234567");
   const [callCustomerName, setCallCustomerName] = useState("Mälarfrakt AB");
@@ -135,7 +139,7 @@ export default function Page() {
   const currentUser = useMemo(() => users.find((x) => x.id === currentUserId) || null, [users, currentUserId]);
 
   useEffect(() => {
-    const raw = localStorage.getItem("crm_telavox_style_state");
+    const raw = localStorage.getItem("crm_branch_plus_state");
     if (!raw) return;
     const parsed = JSON.parse(raw);
     if (parsed.users) setUsers(parsed.users);
@@ -143,13 +147,16 @@ export default function Page() {
     if (parsed.leads) setLeads(parsed.leads);
     if (parsed.customers) setCustomers(parsed.customers);
     if (parsed.orders) setOrders(parsed.orders);
+    if (parsed.quotes) setQuotes(parsed.quotes);
+    if (parsed.tasks) setTasks(parsed.tasks);
     if (parsed.syncQueue) setSyncQueue(parsed.syncQueue);
     if (parsed.callNotes) setCallNotes(parsed.callNotes);
+    if (parsed.audit) setAudit(parsed.audit);
   }, []);
 
   useEffect(() => {
-    localStorage.setItem("crm_telavox_style_state", JSON.stringify({ users, currentUserId, leads, customers, orders, syncQueue, callNotes }));
-  }, [users, currentUserId, leads, customers, orders, syncQueue, callNotes]);
+    localStorage.setItem("crm_branch_plus_state", JSON.stringify({ users, currentUserId, leads, customers, orders, quotes, tasks, syncQueue, callNotes, audit }));
+  }, [users, currentUserId, leads, customers, orders, quotes, tasks, syncQueue, callNotes, audit]);
 
   useEffect(() => {
     if (!currentUser) return;
@@ -159,106 +166,89 @@ export default function Page() {
     }
   }, [currentUser, tab]);
 
+  function logEvent(text: string) {
+    setAudit((prev) => [{ id: "audit-" + Date.now(), text, at: new Date().toLocaleString("sv-SE") }, ...prev]);
+  }
+
   function login() {
     const found = users.find((u) => u.email.toLowerCase() === email.trim().toLowerCase() && u.password === password);
     if (!found) return setLoginMessage("Fel e-post eller lösenord.");
     setCurrentUserId(found.id);
     setLoginMessage(`Inloggad som ${found.name}`);
+    logEvent(`${found.name} loggade in`);
   }
 
   function logout() {
+    if (currentUser) logEvent(`${currentUser.name} loggade ut`);
     setCurrentUserId("");
     setLoginMessage("");
   }
 
   function addLead() {
     if (!newLeadCompany.trim() || !newLeadContact.trim()) return;
-    setLeads([{ company: newLeadCompany.trim(), contact: newLeadContact.trim(), segment: newLeadSegment, status: "Ny" }, ...leads]);
-    setNewLeadCompany("");
-    setNewLeadContact("");
+    setLeads([{ id: "lead-" + Date.now(), company: newLeadCompany.trim(), contact: newLeadContact.trim(), segment: newLeadSegment, status: "Ny" }, ...leads]);
+    logEvent(`Lead skapad: ${newLeadCompany.trim()}`);
+    setNewLeadCompany(""); setNewLeadContact("");
   }
 
   async function lookupCompany() {
     setLookupMessage("Söker...");
-    const res = await fetch("/api/company-lookup", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ query: lookupQuery })
-    });
+    const res = await fetch("/api/company-lookup", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ query: lookupQuery }) });
     const json = await res.json();
     if (!res.ok) return setLookupMessage(json.error || "Fel");
     setCustomers([json.company, ...customers]);
+    logEvent(`Kund tillagd från lookup: ${json.company.name}`);
     setLookupMessage(`Tillagd som kund: ${json.company.name}`);
   }
 
   async function createFortnoxOrder() {
     if (!newOrderCustomer || !newOrderSupplier || !newOrderText.trim()) return;
     setOrderMessage("Skickar...");
-    const res = await fetch("/api/fortnox/create-order", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ customer: newOrderCustomer, supplier: newOrderSupplier, text: newOrderText })
-    });
+    const res = await fetch("/api/fortnox/create-order", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ customer: newOrderCustomer, supplier: newOrderSupplier, text: newOrderText }) });
     const json = await res.json();
     if (!res.ok) return setOrderMessage(json.error || "Fel");
     setOrders([{ id: "ord-" + Date.now(), customer: newOrderCustomer, supplier: newOrderSupplier, text: newOrderText, status: "Skickad" }, ...orders]);
-    setNewOrderText("");
-    setOrderMessage(json.message);
+    logEvent(`Order skapad för ${newOrderCustomer}`);
+    setNewOrderText(""); setOrderMessage(json.message);
   }
 
   async function createInvoice(order: Order) {
     setInvoiceMessage("Fakturerar...");
-    const res = await fetch("/api/fortnox/create-invoice", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ order })
-    });
+    const res = await fetch("/api/fortnox/create-invoice", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ order }) });
     const json = await res.json();
     if (!res.ok) return setInvoiceMessage(json.error || "Fel");
     setOrders((prev) => prev.map((x) => x.id === order.id ? { ...x, status: "Fakturerad" } : x));
+    logEvent(`Faktura skapad från order ${order.id}`);
     setInvoiceMessage(json.message);
   }
 
   async function sendLatestCustomerToFortnox() {
     if (!customers.length) return;
     setFortnoxMessage("Skickar...");
-    const res = await fetch("/api/fortnox/send-customer", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ customer: customers[0] })
-    });
+    const res = await fetch("/api/fortnox/send-customer", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ customer: customers[0] }) });
     const json = await res.json();
     setFortnoxMessage(res.ok ? json.message : json.error || "Fel");
+    logEvent(`Fortnox-skick: ${customers[0].name}`);
   }
 
   function autoSaveCall() {
-    const item: CallNote = {
-      id: "call-" + Date.now(),
-      phone: callPhone,
-      customerName: callCustomerName,
-      note: callLiveNote,
-      savedAt: new Date().toLocaleString("sv-SE"),
-      source: callSource
-    };
+    const item: CallNote = { id: "call-" + Date.now(), phone: callPhone, customerName: callCustomerName, note: callLiveNote, savedAt: new Date().toLocaleString("sv-SE"), source: callSource };
     setCallNotes([item, ...callNotes]);
     const exists = customers.some((c) => c.name.toLowerCase() === callCustomerName.toLowerCase());
     if (!exists && callCustomerName.trim()) {
       setCustomers([{ id: "cust-" + Date.now(), name: callCustomerName.trim(), orgNumber: "", city: "", segment: "Övrigt", source: "Incoming call" }, ...customers]);
     }
+    logEvent(`Samtal autosparat: ${callCustomerName}`);
     setCallSaveMessage("Samtal autosparat.");
     setCallLiveNote("");
   }
 
-  function approveSync(id: string) { setSyncQueue((prev) => prev.map((x) => x.id === id ? { ...x, status: "Approved" } : x)); }
-  function rejectSync(id: string) { setSyncQueue((prev) => prev.map((x) => x.id === id ? { ...x, status: "Rejected" } : x)); }
+  function approveSync(id: string) { setSyncQueue((prev) => prev.map((x) => x.id === id ? { ...x, status: "Approved" } : x)); logEvent(`Synk godkänd ${id}`); }
+  function rejectSync(id: string) { setSyncQueue((prev) => prev.map((x) => x.id === id ? { ...x, status: "Rejected" } : x)); logEvent(`Synk avvisad ${id}`); }
 
   async function askAI() {
     setAiAnswer("Tänker...");
-    const res = await fetch("/api/ai-assistant", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ question: aiQuestion, leads, customers, orders, callNotes })
-    });
+    const res = await fetch("/api/ai-assistant", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ question: aiQuestion, leads, customers, orders, callNotes, tasks, quotes }) });
     const json = await res.json();
     setAiAnswer(res.ok ? json.answer : json.error || "Fel");
   }
@@ -277,9 +267,33 @@ export default function Page() {
     setIntegrationInfo((prev) => ({ ...prev, [provider]: json.message || JSON.stringify(json) }));
   }
 
+  function createQuote() {
+    if (!newQuoteCustomer || !newQuoteTitle.trim() || !newQuoteText.trim()) return;
+    setQuotes([{ id: "quote-" + Date.now(), customer: newQuoteCustomer, title: newQuoteTitle.trim(), text: newQuoteText.trim(), status: "Utkast" }, ...quotes]);
+    logEvent(`Offertutkast skapat för ${newQuoteCustomer}`);
+    setNewQuoteTitle(""); setNewQuoteText("");
+  }
+
+  function sendQuote(id: string) {
+    setQuotes((prev) => prev.map((q) => q.id === id ? { ...q, status: "Skickad" } : q));
+    logEvent(`Offert skickad ${id}`);
+  }
+
+  function createTask() {
+    if (!newTaskTitle.trim()) return;
+    setTasks([{ id: "task-" + Date.now(), title: newTaskTitle.trim(), due: newTaskDue, owner: currentUser?.name || "Okänd", status: "Öppen" }, ...tasks]);
+    logEvent(`Task skapad: ${newTaskTitle.trim()}`);
+    setNewTaskTitle("");
+  }
+
+  function completeTask(id: string) {
+    setTasks((prev) => prev.map((t) => t.id === id ? { ...t, status: "Klar" } : t));
+    logEvent(`Task klar ${id}`);
+  }
+
   function createUser() {
     if (!newUserName.trim() || !newUserEmail.trim() || !newUserPassword.trim()) return setAdminMessage("Fyll i namn, e-post och lösenord.");
-    if (users.some((u) => u.email.toLowerCase() === newUserEmail.trim().toLowerCase())) return setAdminMessage("Den e-posten finns redan.");
+    if (users.some((u) => u.email.toLowerCase() == newUserEmail.trim().toLowerCase())) return setAdminMessage("Den e-posten finns redan.");
     const isAdmin = newUserRole === "admin";
     const newUser: User = {
       id: "u-" + Date.now(),
@@ -287,10 +301,11 @@ export default function Page() {
       email: newUserEmail.trim(),
       password: newUserPassword,
       role: newUserRole,
-      permissions: { dashboard: true, leads: true, customers: true, orders: true, calls: true, sync: isAdmin, integrations: isAdmin, admin: isAdmin },
-      widgets: { stats: true, quickActions: true, recentLeads: true, syncQueue: isAdmin, incomingCall: true, brent: true, catalog: true, ai: true, today: true }
+      permissions: { dashboard: true, pipeline: true, leads: true, customers: true, orders: true, quotes: true, tasks: true, calls: true, sync: isAdmin, integrations: isAdmin, admin: isAdmin },
+      widgets: { stats: true, quickActions: true, recentLeads: true, syncQueue: isAdmin, incomingCall: true, brent: true, catalog: true, ai: true, today: true, hotlist: true, quotes: true }
     };
     setUsers([newUser, ...users]);
+    logEvent(`Användare skapad: ${newUser.email}`);
     setAdminMessage("Användare skapad.");
     setNewUserName(""); setNewUserEmail(""); setNewUserPassword(""); setNewUserRole("employee");
   }
@@ -306,15 +321,14 @@ export default function Page() {
   function setRole(userId: string, role: "admin" | "employee") {
     setUsers((prev) => prev.map((u) => {
       if (u.id !== userId) return u;
-      if (role === "admin") {
-        return { ...u, role, permissions: { dashboard: true, leads: true, customers: true, orders: true, calls: true, sync: true, integrations: true, admin: true }, widgets: { stats: true, quickActions: true, recentLeads: true, syncQueue: true, incomingCall: true, brent: true, catalog: true, ai: true, today: true } };
-      }
+      if (role === "admin") return { ...u, role, permissions: { dashboard: true, pipeline: true, leads: true, customers: true, orders: true, quotes: true, tasks: true, calls: true, sync: true, integrations: true, admin: true }, widgets: { stats: true, quickActions: true, recentLeads: true, syncQueue: true, incomingCall: true, brent: true, catalog: true, ai: true, today: true, hotlist: true, quotes: true } };
       return { ...u, role, permissions: { ...u.permissions, sync: false, integrations: false, admin: false }, widgets: { ...u.widgets, syncQueue: false } };
     }));
   }
 
   const currentUserWidgets = currentUser?.widgets || defaultAdmin.widgets;
   const allowedSections = currentUser ? (Object.keys(sectionLabels) as SectionKey[]).filter((x) => currentUser.permissions[x]) : [];
+  const pipelineCols = ["Ny", "Kontaktad", "Offert", "Affär", "Förlorad"] as const;
 
   const shell: React.CSSProperties = { maxWidth: 1360, margin: "0 auto", padding: 24, color: "#141414" };
   const sidebar: React.CSSProperties = { width: 250, background: "#111214", color: "white", borderRadius: 24, padding: 18, minHeight: "calc(100vh - 48px)" };
@@ -324,7 +338,6 @@ export default function Page() {
   const input: React.CSSProperties = { width: "100%", maxWidth: 460, padding: 12, borderRadius: 12, border: "1px solid #d6d6d6", marginBottom: 10, background: "#fff" };
   const primary: React.CSSProperties = { background: "#b01422", color: "white", border: 0, borderRadius: 14, padding: "11px 16px", cursor: "pointer", fontWeight: 700 };
   const soft: React.CSSProperties = { background: "#ffffff", color: "#111214", border: "1px solid #d6d6d6", borderRadius: 14, padding: "11px 16px", cursor: "pointer", fontWeight: 700 };
-  const pill = (on: boolean): React.CSSProperties => ({ display: "inline-block", padding: "6px 10px", borderRadius: 999, fontWeight: 700, fontSize: 12, background: on ? "#eaf8ef" : "#fdeceb", color: on ? "#198754" : "#c1121f" });
   const sideBtn = (active: boolean): React.CSSProperties => ({ width: "100%", textAlign: "left", background: active ? "#b01422" : "transparent", color: "white", border: "1px solid " + (active ? "#b01422" : "#2a2d33"), borderRadius: 14, padding: "12px 14px", marginBottom: 8, cursor: "pointer", fontWeight: 700 });
 
   if (!currentUser) {
@@ -334,7 +347,7 @@ export default function Page() {
           <div style={{ ...card, padding: 28 }}>
             <Image src="/sodertorns-team-logo.svg" alt="Södertörns Team" width={220} height={60} />
             <h1>Logga in</h1>
-            <p>Vit, röd och svart dashboard-version med Fortnox-first upplägg.</p>
+            <p>Branch plus med fler delar som jag tycker behövs i din verksamhet.</p>
             <p><strong>Admin:</strong> admin@sodertornsteam.se / admin123</p>
             <p><strong>Anställd:</strong> salj@sodertornsteam.se / 1234</p>
             <input style={input} placeholder="E-post" value={email} onChange={(e) => setEmail(e.target.value)} />
@@ -358,9 +371,7 @@ export default function Page() {
             <div style={{ marginTop: 12, fontSize: 14, opacity: 0.9 }}>{currentUser.name} · {currentUser.role}</div>
           </div>
           {allowedSections.map((section) => (
-            <button key={section} style={sideBtn(tab === section)} onClick={() => setTab(section)}>
-              {sectionLabels[section]}
-            </button>
+            <button key={section} style={sideBtn(tab === section)} onClick={() => setTab(section)}>{sectionLabels[section]}</button>
           ))}
           <div style={{ marginTop: 20 }}>
             <button style={{ ...soft, width: "100%" }} onClick={logout}>Logga ut</button>
@@ -372,8 +383,9 @@ export default function Page() {
             <h1 style={{ marginTop: 0, marginBottom: 8 }}>Dashboard</h1>
             <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
               <span style={pill(true)}>På: live-redo Fortnox</span>
-              <span style={pill(true)}>På: samtalspanel</span>
-              <span style={pill(False)}>Av: riktiga tokens saknas</span>
+              <span style={pill(true)}>På: pipeline</span>
+              <span style={pill(true)}>På: offerter / tasks</span>
+              <span style={pill(false)}>Av: riktiga tokens saknas</span>
             </div>
           </div>
 
@@ -384,76 +396,36 @@ export default function Page() {
                   <div style={card}><div style={{ color: "#666" }}>Leads</div><div style={{ fontSize: 30, fontWeight: 800 }}>{leads.length}</div></div>
                   <div style={card}><div style={{ color: "#666" }}>Kunder</div><div style={{ fontSize: 30, fontWeight: 800 }}>{customers.length}</div></div>
                   <div style={card}><div style={{ color: "#666" }}>Order</div><div style={{ fontSize: 30, fontWeight: 800 }}>{orders.length}</div></div>
-                  <div style={card}><div style={{ color: "#666" }}>Synk-kö</div><div style={{ fontSize: 30, fontWeight: 800 }}>{syncQueue.filter(x => x.status === "Pending").length}</div></div>
+                  <div style={card}><div style={{ color: "#666" }}>Tasks</div><div style={{ fontSize: 30, fontWeight: 800 }}>{tasks.filter(t => t.status === "Öppen").length}</div></div>
                 </div>
               )}
 
               <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: 16 }}>
-                {currentUserWidgets.quickActions && (
-                  <div style={card}>
-                    <h2 style={{ marginTop: 0 }}>Snabbknappar</h2>
-                    <button style={primary} onClick={() => setTab("leads")}>Nytt lead</button>{" "}
-                    <button style={soft} onClick={() => setTab("orders")}>Ny order</button>{" "}
-                    <button style={soft} onClick={() => setTab("calls")}>Pågående samtal</button>
-                  </div>
-                )}
-                {currentUserWidgets.ai && (
-                  <div style={card}>
-                    <h2 style={{ marginTop: 0 }}>AI-assistent</h2>
-                    <input style={input} value={aiQuestion} onChange={(e) => setAiQuestion(e.target.value)} placeholder="Fråga om sälj, olja, katalog eller automation" />
-                    <br />
-                    <button style={primary} onClick={askAI}>Fråga</button>
-                    <p style={{ whiteSpace: "pre-wrap" }}>{aiAnswer}</p>
-                  </div>
-                )}
+                {currentUserWidgets.quickActions && <div style={card}><h2 style={{ marginTop: 0 }}>Snabbknappar</h2><button style={primary} onClick={() => setTab("leads")}>Nytt lead</button>{" "}<button style={soft} onClick={() => setTab("orders")}>Ny order</button>{" "}<button style={soft} onClick={() => setTab("quotes")}>Ny offert</button>{" "}<button style={soft} onClick={() => setTab("calls")}>Pågående samtal</button></div>}
+                {currentUserWidgets.ai && <div style={card}><h2 style={{ marginTop: 0 }}>AI-assistent</h2><input style={input} value={aiQuestion} onChange={(e) => setAiQuestion(e.target.value)} placeholder="Fråga om sälj, olja, katalog eller automation" /><br /><button style={primary} onClick={askAI}>Fråga</button><p style={{ whiteSpace: "pre-wrap" }}>{aiAnswer}</p></div>}
               </div>
 
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-                {currentUserWidgets.recentLeads && (
-                  <div style={card}>
-                    <h2 style={{ marginTop: 0 }}>Senaste leads</h2>
-                    <ul>{leads.slice(0, 5).map((lead, i) => <li key={i}>{lead.company} - {lead.contact} - {lead.status}</li>)}</ul>
-                  </div>
-                )}
-                {currentUserWidgets.syncQueue && (
-                  <div style={card}>
-                    <h2 style={{ marginTop: 0 }}>Synk-kö</h2>
-                    <ul>{syncQueue.filter((x) => x.status === "Pending").map((item) => <li key={item.id}>{item.customerName}: {item.field} {item.oldValue} → {item.newValue}</li>)}</ul>
-                  </div>
-                )}
-                {currentUserWidgets.incomingCall && (
-                  <div style={card}>
-                    <h2 style={{ marginTop: 0 }}>Pågående samtal</h2>
-                    <div>Senast: {callNotes[0]?.customerName || "-"}</div>
-                    <div>Telefon: {callNotes[0]?.phone || "-"}</div>
-                    <button style={soft} onClick={() => setTab("calls")}>Öppna samtalspanel</button>
-                  </div>
-                )}
-                {currentUserWidgets.brent && (
-                  <div style={card}>
-                    <h2 style={{ marginTop: 0 }}>Brent-widget</h2>
-                    <div>Senaste sparade nivå: <strong>76.40 USD/fat</strong></div>
-                    <button style={soft} onClick={() => loadIntegration("brent")}>Hämta status</button>
-                    <div>{integrationInfo.brent}</div>
-                  </div>
-                )}
-                {currentUserWidgets.catalog && (
-                  <div style={card}>
-                    <h2 style={{ marginTop: 0 }}>Katalog-widget</h2>
-                    <div>Personbil, lastbil och maskin.</div>
-                    <button style={soft} onClick={() => loadIntegration("catalog")}>Hämta status</button>
-                    <div>{integrationInfo.catalog}</div>
-                  </div>
-                )}
-                {currentUserWidgets.today && (
-                  <div style={card}>
-                    <h2 style={{ marginTop: 0 }}>Idag</h2>
-                    <div>3 uppföljningar</div>
-                    <div>1 order att fakturera</div>
-                    <div>2 kunder i synk-kö</div>
-                  </div>
-                )}
+                {currentUserWidgets.recentLeads && <div style={card}><h2 style={{ marginTop: 0 }}>Senaste leads</h2><ul>{leads.slice(0, 5).map((lead, i) => <li key={i}>{lead.company} - {lead.contact} - {lead.status}</li>)}</ul></div>}
+                {currentUserWidgets.hotlist && <div style={card}><h2 style={{ marginTop: 0 }}>Hotlist</h2><ul>{customers.filter(c => c.hot).map((c) => <li key={c.id}>{c.name} - {c.segment}</li>)}</ul></div>}
+                {currentUserWidgets.syncQueue && <div style={card}><h2 style={{ marginTop: 0 }}>Synk-kö</h2><ul>{syncQueue.filter((x) => x.status === "Pending").map((item) => <li key={item.id}>{item.customerName}: {item.field} {item.oldValue} → {item.newValue}</li>)}</ul></div>}
+                {currentUserWidgets.incomingCall && <div style={card}><h2 style={{ marginTop: 0 }}>Pågående samtal</h2><div>Senast: {callNotes[0]?.customerName || "-"}</div><div>Telefon: {callNotes[0]?.phone || "-"}</div><button style={soft} onClick={() => setTab("calls")}>Öppna samtalspanel</button></div>}
+                {currentUserWidgets.brent && <div style={card}><h2 style={{ marginTop: 0 }}>Brent-widget</h2><div>Senaste sparade nivå: <strong>76.40 USD/fat</strong></div><button style={soft} onClick={() => loadIntegration("brent")}>Hämta status</button><div>{integrationInfo.brent}</div></div>}
+                {currentUserWidgets.catalog && <div style={card}><h2 style={{ marginTop: 0 }}>Katalog-widget</h2><div>Personbil, lastbil och maskin.</div><button style={soft} onClick={() => loadIntegration("catalog")}>Hämta status</button><div>{integrationInfo.catalog}</div></div>}
+                {currentUserWidgets.today && <div style={card}><h2 style={{ marginTop: 0 }}>Idag</h2><div>Öppna tasks: {tasks.filter(t => t.status === "Öppen").length}</div><div>Order att fakturera: {orders.filter(o => o.status !== "Fakturerad").length}</div><div>Synk-kö: {syncQueue.filter(x => x.status === "Pending").length}</div></div>}
+                {currentUserWidgets.quotes && <div style={card}><h2 style={{ marginTop: 0 }}>Offerter-widget</h2><ul>{quotes.slice(0, 3).map((q) => <li key={q.id}>{q.customer} - {q.title} - {q.status}</li>)}</ul></div>}
               </div>
+            </div>
+          )}
+
+          {tab === "pipeline" && (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 16 }}>
+              {pipelineCols.map((col) => (
+                <div key={col} style={card}>
+                  <h2 style={{ marginTop: 0 }}>{col}</h2>
+                  <ul>{leads.filter(l => l.status === col).map((lead) => <li key={lead.id}>{lead.company}<br />{lead.contact}</li>)}</ul>
+                </div>
+              ))}
             </div>
           )}
 
@@ -472,7 +444,7 @@ export default function Page() {
               </select>
               <br />
               <button style={primary} onClick={addLead}>Lägg till lead</button>
-              <ul>{leads.map((lead, i) => <li key={i}>{lead.company} - {lead.contact} - {lead.segment} - {lead.status}</li>)}</ul>
+              <ul>{leads.map((lead) => <li key={lead.id}>{lead.company} - {lead.contact} - {lead.segment} - {lead.status}</li>)}</ul>
             </div>
           )}
 
@@ -505,14 +477,35 @@ export default function Page() {
               <button style={primary} onClick={createFortnoxOrder}>Skicka order</button>
               <p>{orderMessage}</p>
               <p>{invoiceMessage}</p>
-              <ul>
-                {orders.map((order) => (
-                  <li key={order.id}>
-                    {order.customer} - {order.supplier} - {order.text} - {order.status}{" "}
-                    {order.status !== "Fakturerad" && <button style={soft} onClick={() => createInvoice(order)}>Fakturera</button>}
-                  </li>
-                ))}
-              </ul>
+              <ul>{orders.map((order) => <li key={order.id}>{order.customer} - {order.supplier} - {order.text} - {order.status} {order.status !== "Fakturerad" && <button style={soft} onClick={() => createInvoice(order)}>Fakturera</button>}</li>)}</ul>
+            </div>
+          )}
+
+          {tab === "quotes" && (
+            <div style={card}>
+              <h2 style={{ marginTop: 0 }}>Offerter</h2>
+              <select style={input} value={newQuoteCustomer} onChange={(e) => setNewQuoteCustomer(e.target.value)}>
+                {customers.map((customer) => <option key={customer.id}>{customer.name}</option>)}
+              </select>
+              <br />
+              <input style={input} placeholder="Titel" value={newQuoteTitle} onChange={(e) => setNewQuoteTitle(e.target.value)} />
+              <br />
+              <textarea style={{ ...input, minHeight: 120 }} placeholder="Offertutkast" value={newQuoteText} onChange={(e) => setNewQuoteText(e.target.value)} />
+              <br />
+              <button style={primary} onClick={createQuote}>Skapa offertutkast</button>
+              <ul>{quotes.map((quote) => <li key={quote.id}>{quote.customer} - {quote.title} - {quote.status} {quote.status !== "Skickad" && <button style={soft} onClick={() => sendQuote(quote.id)}>Skicka</button>}</li>)}</ul>
+            </div>
+          )}
+
+          {tab === "tasks" && (
+            <div style={card}>
+              <h2 style={{ marginTop: 0 }}>Tasks / uppföljning</h2>
+              <input style={input} placeholder="Task" value={newTaskTitle} onChange={(e) => setNewTaskTitle(e.target.value)} />
+              <br />
+              <input style={input} type="date" value={newTaskDue} onChange={(e) => setNewTaskDue(e.target.value)} />
+              <br />
+              <button style={primary} onClick={createTask}>Skapa task</button>
+              <ul>{tasks.map((task) => <li key={task.id}>{task.title} - {task.due} - {task.owner} - {task.status} {task.status !== "Klar" && <button style={soft} onClick={() => completeTask(task.id)}>Klar</button>}</li>)}</ul>
             </div>
           )}
 
@@ -540,19 +533,7 @@ export default function Page() {
           {tab === "sync" && (
             <div style={card}>
               <h2 style={{ marginTop: 0 }}>Synk-kö till Fortnox</h2>
-              <ul>
-                {syncQueue.map((item) => (
-                  <li key={item.id}>
-                    {item.customerName} - {item.field}: {item.oldValue} → {item.newValue} - {item.status}{" "}
-                    {item.status === "Pending" && (
-                      <>
-                        <button style={soft} onClick={() => approveSync(item.id)}>Godkänn</button>{" "}
-                        <button style={soft} onClick={() => rejectSync(item.id)}>Avvisa</button>
-                      </>
-                    )}
-                  </li>
-                ))}
-              </ul>
+              <ul>{syncQueue.map((item) => <li key={item.id}>{item.customerName} - {item.field}: {item.oldValue} → {item.newValue} - {item.status} {item.status === "Pending" && <><button style={soft} onClick={() => approveSync(item.id)}>Godkänn</button>{" "}<button style={soft} onClick={() => rejectSync(item.id)}>Avvisa</button></>}</li>)}</ul>
             </div>
           )}
 
@@ -613,6 +594,11 @@ export default function Page() {
                     </div>
                   </div>
                 ))}
+              </div>
+
+              <div style={card}>
+                <h2 style={{ marginTop: 0 }}>Audit log</h2>
+                <ul>{audit.slice(0, 20).map((item) => <li key={item.id}>{item.at} - {item.text}</li>)}</ul>
               </div>
             </div>
           )}

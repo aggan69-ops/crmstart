@@ -1,18 +1,20 @@
-Södertörns Team CRM - dashboard version
+Södertörns Team CRM - branch plus
 
-Ny design:
-- mer lik en modern dashboard
-- vit, röd och svart
-- gröna på-statusar
-- röda av-statusar
+Detta är nästa nivå för din branch.
 
 Nytt:
-- första live-redo Fortnox-helper via miljövariabler
-- server-side Fortnox routes
-- bättre dashboard med widgets
+- modern vit/röd/svart dashboard
+- Fortnox live-redo helpers
+- tasks / uppföljningar
+- pipeline
+- hotlist / favoritkunder
+- offertutkast
+- produktförslag per segment
 - samtalspanel
 - synk-kö
-- admin + behörigheter
+- audit log
+- widgetstyrning
+- integrationsstatus
 
 Demo login:
 admin@sodertornsteam.se / admin123
