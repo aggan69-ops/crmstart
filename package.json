@@ -1,5 +1,5 @@
 {
-  "name": "crm-live-integrations",
+  "name": "crm-telavox-style",
   "private": true,
   "scripts": {
     "build": "next build",

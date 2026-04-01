@@ -21,10 +21,9 @@ export async function POST(req: NextRequest) {
       orgNumber: query.includes("556") ? query : "556999-1234",
       city: "Stockholm",
       segment: segmentFromQuery(query),
-      revenue: "18 MSEK",
-      employees: "7",
+      email: "info@lookupforetag.se",
       paymentTerms: "30 dagar",
-      email: "info@lookupforetag.se"
+      source: "Lookup"
     }
   });
 }

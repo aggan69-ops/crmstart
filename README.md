@@ -1,15 +1,19 @@
-Södertörns Team CRM - live integrations version
+Södertörns Team CRM - dashboard version
 
-Nytt i denna version:
-- live-redo miljövariabler för Fortnox, Office 365, Teams, Telavox, katalog-API och Brent-widget
-- smarta widgets på dashboard
-- inkommande samtal med autosave
-- order med leverantörsrullista
-- fakturera från order
-- synk-kö för kundändringar innan Fortnox
-- AI-panel
-- admin + anställda + widgetbehörigheter
+Ny design:
+- mer lik en modern dashboard
+- vit, röd och svart
+- gröna på-statusar
+- röda av-statusar
 
-Demo-inloggning:
-Admin: admin@sodertornsteam.se / admin123
-Anställd: salj@sodertornsteam.se / 1234
+Nytt:
+- första live-redo Fortnox-helper via miljövariabler
+- server-side Fortnox routes
+- bättre dashboard med widgets
+- samtalspanel
+- synk-kö
+- admin + behörigheter
+
+Demo login:
+admin@sodertornsteam.se / admin123
+salj@sodertornsteam.se / 1234

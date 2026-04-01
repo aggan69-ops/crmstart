@@ -3,6 +3,6 @@ export async function GET() {
   return NextResponse.json({
     provider: "teams",
     ready: true,
-    message: "Teams är förberett för notiser, möten och samarbete."
+    message: "Teams är förberett för möten, notiser och samarbete."
   });
 }
