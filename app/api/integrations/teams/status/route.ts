@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 export async function GET() {
   return NextResponse.json({
-    provider: "fortnox",
+    provider: "teams",
     ready: true,
-    message: "Fortnox är förberett för kunder, order och fakturor."
+    message: "Teams är förberett för notiser, möten och samarbete."
   });
 }

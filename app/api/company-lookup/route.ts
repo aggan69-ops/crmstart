@@ -16,10 +16,15 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({
     ok: true,
     company: {
+      id: "cust-" + Date.now(),
       name: query.includes("556") ? "Lookup Företag AB" : query,
       orgNumber: query.includes("556") ? query : "556999-1234",
       city: "Stockholm",
-      segment: segmentFromQuery(query)
+      segment: segmentFromQuery(query),
+      revenue: "18 MSEK",
+      employees: "7",
+      paymentTerms: "30 dagar",
+      email: "info@lookupforetag.se"
     }
   });
 }

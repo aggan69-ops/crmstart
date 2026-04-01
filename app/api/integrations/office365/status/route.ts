@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 export async function GET() {
   return NextResponse.json({
-    provider: "fortnox",
+    provider: "office365",
     ready: true,
-    message: "Fortnox är förberett för kunder, order och fakturor."
+    message: "Office 365 är förberett för mail, kalender och kontakter."
   });
 }
