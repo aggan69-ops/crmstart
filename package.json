@@ -1,5 +1,5 @@
 {
-  "name": "crm",
+  "name": "crm-basic-complete",
   "private": true,
   "scripts": {
     "build": "next build",

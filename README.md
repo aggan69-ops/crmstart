@@ -1,6 +1,14 @@
-Steg 1: enkel leads-sida.
+En enkel färdig CRM-version.
 
 Innehåll:
-- startsida
-- leads-sida
-- enkel formulärfunktion i browsern
+- Leads
+- Kunder
+- Order
+- Aktiviteter
+- Enkel inställningssida
+- Allt sparas i browsern med localStorage
+
+Så använder du den:
+1. Lägg filerna i repo-roten
+2. Deploya på Vercel
+3. Klart
