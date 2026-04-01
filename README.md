@@ -1,20 +1,19 @@
-CRM med mörkröd enkel UI och integrationsförberedelse.
+Södertörns Team CRM - nästa version
 
 Innehåll:
-- mörkröd startsida inspirerad av enkel produkt/handels-layout
+- mörkröd landningssida
+- logo stöd via public/sodertorns-team-logo.png
 - leads, kunder, order, aktiviteter
-- lokal lagring i browsern
-- integrationssektion för Fortnox, Telavox och ABR
-- API-routes för status och testanrop
+- företagslookup med segmentering
+- förberedelse för Fortnox-skicka-kund
+- enkel AI-panel på landningssidan
 
 API-routes:
-- /api/integrations/fortnox/status
-- /api/integrations/telavox/status
-- /api/integrations/abr/status
-- /api/integrations/fortnox/test
-- /api/integrations/telavox/test
-- /api/integrations/abr/test
+- POST /api/company-lookup
+- POST /api/fortnox/send-customer
+- POST /api/ai-assistant
 
-Obs:
-- Tokens sparas i browsern i denna enkla version.
-- Vill du köra live-koppling senare kan vi flytta tokens till server-side miljövariabler.
+Viktigt:
+- company-lookup använder lokal demo-logik nu
+- Fortnox-routen är en säker mock som visar payload
+- AI-routen är en lokal placeholder tills riktig OpenAI/Fortnox/Telavox kopplas in

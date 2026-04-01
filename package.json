@@ -1,5 +1,5 @@
 {
-  "name": "crm-red-api",
+  "name": "crm-next-version",
   "private": true,
   "scripts": {
     "build": "next build",
