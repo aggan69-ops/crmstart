@@ -1,14 +1,20 @@
-En enkel färdig CRM-version.
+CRM med mörkröd enkel UI och integrationsförberedelse.
 
 Innehåll:
-- Leads
-- Kunder
-- Order
-- Aktiviteter
-- Enkel inställningssida
-- Allt sparas i browsern med localStorage
+- mörkröd startsida inspirerad av enkel produkt/handels-layout
+- leads, kunder, order, aktiviteter
+- lokal lagring i browsern
+- integrationssektion för Fortnox, Telavox och ABR
+- API-routes för status och testanrop
 
-Så använder du den:
-1. Lägg filerna i repo-roten
-2. Deploya på Vercel
-3. Klart
+API-routes:
+- /api/integrations/fortnox/status
+- /api/integrations/telavox/status
+- /api/integrations/abr/status
+- /api/integrations/fortnox/test
+- /api/integrations/telavox/test
+- /api/integrations/abr/test
+
+Obs:
+- Tokens sparas i browsern i denna enkla version.
+- Vill du köra live-koppling senare kan vi flytta tokens till server-side miljövariabler.
